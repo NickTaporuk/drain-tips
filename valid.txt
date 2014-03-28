@@ -1,0 +1,118 @@
+/**
+ * Created by NickTaporuk on 24.12.13.
+ */
+/*
+*
+* */
+var pattern = /^[a-z0-9\._-]+@[a-z0-9-]+\.([a-z0-9]{1,10}\.)?[a-z]{2,8}$/i;//name09-_@mail09-.ru
+var pattern_text = /^[a-z0-9]{4,}$/i;//name09
+/*
+*
+* */
+ jQuery(document).ready(function(){
+//    console.log('its my valid script');
+     //поле login
+     var register=jQuery('.register');
+     //value
+     var register_value=jQuery('.value');
+//     console.log(register.val());
+
+     register.bind('keyup click',function(){
+         if(register.val()!='' &&register.val().length>=4)
+         {
+             console.log(register.val());
+//             register_value.hide();
+             if(register.val().search(pattern_text)==0)
+             {
+                 register_value.text('ваш логин свободен');
+                 register_value.removeClass('error').addClass('ok');
+             }
+             else
+             {
+                 register_value.text('ваш логин не свободен или не коректно введено или он содержит @_-');
+                 register_value.removeClass('ok').addClass('error');
+             }
+         }
+         else
+         {
+             if(register.val().length==0)
+             {
+                 register_value.text('имя должно не быть пустым').removeClass('ok').addClass('error');
+
+             }
+             else if(register.val().length<4)
+             {
+                 console.log(register.val().length);
+                 register_value.text('имя должно быть не менее 4 символов').removeClass('ok').addClass('error');
+             }
+             else   register_value.show().text('поле не должно быть пустым').removeClass('ok').addClass('error');
+         }
+     });
+
+     var mail=jQuery('.mail');
+     //value
+     var mail_value=jQuery('.value_1');
+//     console.log(register.val());
+
+     mail.bind('keyup click',function(){
+         if(mail.val()!='')
+         {
+//             console.log(register.val());
+//             register_value.hide();
+             if(mail.val().search(pattern)==0)
+             {
+                 mail_value.text('ваше название почты свободно').removeClass('error').addClass('ok');
+             }
+             else
+             {
+                    mail_value.text('вввод не коректен').removeClass('ok').addClass('error');
+             }
+         }
+         else
+         {
+             mail_value.show().text('поле email не должно быть пустым').removeClass('ok').addClass('error');
+         }
+     });
+ });
+//var pattern = /^[a-z0-9\._-]+@[a-z0-9-]+\.([a-z0-9]{1,10}\.)?[a-z]{2,6}$/i;//name09-_@mail09-.ru
+//var pattern_text = /^[a-z0-9]{4,}$/i;//name09-_@mail09-.ru
+//function my_valid(parant,name_tag,pattern)
+//{
+//
+//        console.log(name_tag);
+////        console.log('it my valid script');
+//        //поле login
+//        var register=jQuery(parant+name_tag);
+//        console.log(register);
+//        //value
+//
+//        var register_value=jQuery(name_tag).find('span');
+//        console.log(register_value);
+////        console.log(register.val());
+////        console.log(register_value.val());
+//
+//        register.bind('keyup click',function(){
+//            if(register.val()!='')
+//            {
+//                console.log(register.val());
+////             register_value.hide();
+//                if(register.val().search(pattern)==0)
+//                {
+//                    register_value.text('ваш логин свободен');
+//                    register_value.removeClass('error').addClass('ok');
+//                }
+//                else
+//                {
+//                    register_value.text('ваш логин не свободен или он содержит @_-');
+//                    register_value.removeClass('ok').addClass('error');
+//                }
+//            }
+//            else
+//            {
+//                register_value.show().text('поле не должно быть пустым');
+//                register_value.removeClass('ok').addClass('error');
+//            }
+//        });
+//
+//}
+//my_valid('.i-email',' .mail',pattern);
