@@ -1,2 +1,3 @@
 echo 'Êîíòğîëëåğ :'.$controller = Yii::app()->controller->id.'<br>';
 echo 'Äåéñòâèå :'.$action = Yii::app()->controller->action->id.'<br>';
+
