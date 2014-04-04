@@ -1,1 +1,3 @@
 http://jenyay.net/Programming/Git
+i18
+http://psyhos.blogspot.com/search/label/I18N
