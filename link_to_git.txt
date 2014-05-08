@@ -2,5 +2,5 @@ http://jenyay.net/Programming/Git
 i18
 http://psyhos.blogspot.com/search/label/I18N
 
-//посмотреть всю историю 
+//посмотреть всю историю  коммитов
 git log --graph --color-words --color --source --decorate --all
