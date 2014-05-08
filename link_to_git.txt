@@ -4,3 +4,5 @@ http://psyhos.blogspot.com/search/label/I18N
 
 //посмотреть всю историю  коммитов
 git log --graph --color-words --color --source --decorate --all
+//для перехода от svn
+http://webhamster.ru/mytetrashare/index/mtb0/1412
