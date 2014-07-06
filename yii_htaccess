@@ -1,0 +1,18 @@
+AddDefaultCharset utf-8
+
+RewriteEngine on
+Options +FollowSymLinks
+
+# id directoru or a file exists, use it directly
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-l
+
+#подставляю слэш если в конце не стоит слеш
+RewriteCond %{REQUEST_URI} !/$
+RewriteCond %{REQUEST_URI} !\.
+RewriteRule ^(.*) %{REQUEST_URI}/ [R=301,L]
+
+# otherwise forward it to index.php
+#RewriteRule . index.php
+RewriteRule !.(gif|jpg|css|jpe?g|png|js)$ index.php
