@@ -1,5 +1,5 @@
-echo '���������� :'.$controller = Yii::app()->controller->id.'<br>';
-echo '�������� :'.$action = Yii::app()->controller->action->id.'<br>';
+echo $controller = Yii::app()->controller->id.'<br>';
+echo $action = Yii::app()->controller->action->id.'<br>';
 
 Yii CdbController
 http://devkp.ru/post/primer-ispolzovaniya-cdbcriteria-metodyi
