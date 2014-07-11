@@ -1,0 +1,22 @@
+idleTimer = null;
+idleState = false; // состояние отсутствия
+idleWait = 2000; // время ожидания в мс. (1/1000 секунды)
+ 
+$(document).ready( function(){
+  $(document).bind('mousemove keydown scroll', function(){
+    clearTimeout(idleTimer); // отменяем прежний временной отрезок
+    if(idleState == true){ 
+      // Действия на возвращение пользователя
+       $("body").append("<p>С возвращением!</p>");
+    }
+ 
+    idleState = false;
+    idleTimer = setTimeout(function(){ 
+      // Действия на отсутствие пользователя
+      $("body").append("<p>Вы отсутствовали более чем " + idleWait/1000 + " секунд.</p>");
+      idleState = true; 
+    }, idleWait);
+  });
+ 
+  $("body").trigger("mousemove"); // сгенерируем ложное событие, для запуска скрипта
+});
