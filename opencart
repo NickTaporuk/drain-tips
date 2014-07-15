@@ -1,0 +1,106 @@
+// Cache Кэш
+$this->cache->set($key, $value); // Внесение данных в кэш
+$this->cache->get($key); // Получение данных из кэша
+$this->cache->delete($key); // Удаление данных из кэша
+ 
+// Cart Корзина
+$this->cart->getProducts(); //Получает все товары находящиеся в корзине учитывая опции, акции.
+$this->cart->add( $product_id, $qty = 1, $options = array()); // Добавление товара в корзину
+$this->cart->remove( $key ); // Удаление товара из корзины
+$this->cart->clear(); // Очистка корзины
+$this->cart->getWeight(); // Получение веса всей корзины
+$this->cart->getSubTotal(); // Получение суммы цен элементов корзины без вычета налогов
+$this->cart->getTotal(); // Получение суммы цен элементов корзины с вычетом налогов
+$this->cart->countProducts(); // Получение количества товаров в корзине 
+$this->cart->hasProducts(); // Проверяет пуста корзина или нет
+$this->cart->hasStock(); // Возвращает false, если хотя бы один элемент корзины отсутствует на складе(в продаже)
+$this->cart->hasShipping(); // Возвращает true, если хотя бы один элемент корзины требует доставку
+$this->cart->hasDownload(); // Возвращает true, если хотя бы один элемент корзины связан с какой-либо загрузкой 
+ 
+// Config Настройки
+$this->config->get($key); // Возвращает значение настройки 
+$this->config->set($key, $value); // Устанавливает значение настройки (Не сохраняется в базе данных)
+ 
+// Currency Валюта
+$this->currency->set($currency); // Устанавливает код валюты, который будет использоваться в сессии
+$this->currency->format($number, $currency = '', $value = '', $format = TRUE); // "format" валюты 
+$this->currency->convert($value, $from, $to); // Конвертирует значение одной валюты в другую
+$this->currency->getId(); // Возвращает ID текущей валюты (1, 2, 3, 4)
+$this->currency->getCode(); // Возвращает код текущей валюты (USD, EUR, GBP, AUD, etc)
+$this->currency->getValue($currency); // Возвращает текущий курс для указанной валюты
+$this->currency->has($currency) // Проверяет существует ли указанная валюта
+ 
+// Customer Клиент
+$this->customer->login($email, $password); //Авторизация 
+$this->customer->logout(); // Выход
+$this->customer->isLogged(); // Проверяет авторизован клиент или нет
+$this->customer->getId(); // Получает ID клиента
+$this->customer->getFirstName(); // Получает первое имя клиента
+$this->customer->getLastName(); // Получает второе имя клиента
+$this->customer->getEmail(); // Получает Email ользователя
+$this->customer->getTelephone(); // Получает номер телефона клиента
+$this->customer->getFax(); // Получает факс клиента
+$this->customer->getNewsletter(); // Получает подписку клиента
+$this->customer->getCustomerGroupId(); // Получает ID группы клиента
+$this->customer->getAddressId(); // Получает ID адреса пользователя
+ 
+// DB База данных
+$this->db->query($sql); //Выполняет SQL запрос
+$this->db->escape($value); // Слеширует данные перед внесением в базу данных
+$this->db->countAffected($sql); // Возвращает кол-во затронутых запросом строк
+$this->db->getLastId($sql); //Возвращает значение последнего auto_increment поля 
+ 
+// Document Документ
+$this->document->setTitle($title); // Устанавливает title страницы
+$this->document->getTitle(); // Возвращает title страницы  
+$this->document->setDescription($description); // Устанавливает description
+$this->document->getDescription(); // Возвращает description
+$this->document->setKeywords(); // Устанавливает keywords
+$this->document->getKeywords(); // Возвращает keywords
+$this->document->setBase($base); // Устанавливает базовую ссылку
+$this->document->getBase(); // Возвращает базовую ссылку
+$this->document->setCharset($charset); // Устанавливает charset страницы
+$this->document->getCharset(); Возвращает charset страницы
+$this->document->setLanguage($language); // Устанавливает язык страницы
+$this->document->getLanguage(); // Возвращает язык страницы
+$this->document->setDirection($direction); // Устанавливает направление текста страницы (rtl/ltr)
+$this->document->getDirection(); // Возвращает направление текста страницы (rtl/ltr)
+$this->document->addLink( $href, $rel ); // Добавляет тег <link>
+$this->document->getLinks(); // Возвращает массив тегов <link>
+$this->document->addStyle( $href, $rel = 'stylesheet', $media = 'screen' ); // Добавляет стиль
+$this->document->getStyles(); // Возвращает массив стилей
+$this->document->addScript( $script ); // Добавляет скрипт
+$this->document->getScripts(); // Возвращает массив скриптов
+$this->document->addBreadcrumb($text, $href, $separator = ' &gt; '); // Добавляет хлебные крошки в массив
+$this->document->getBreadcrumbs(); // Возвращает хлебные крошки
+ 
+// Encryption Шифрование
+$this->encryption->encrypt($value); // Шифрует строку на основе ключа, установленного в административной панели.
+$this->encryption->decrypt($value); // Дешифрует строку
+ 
+// JSON
+$this->json->encode( $data ); // Шифрует данные в формат JSON 
+$this->json->decode( $data , $assoc = FALSE); // Дешифрует данные из формата JSON
+ 
+// Language Язык
+$this->language->load($filename); // Загрузка языка
+$this->language->get($key); // Возвращает значение языковой переменный текущего языка
+ 
+// Lenght Длина
+$this->length->convert($value, $from, $to); // Конвертирует длину из одной системы в другую
+$this->length->format($value, $unit, $decimal_point = '.', $thousand_point = ','); // Форматирует вывод длины
+ 
+// Log Лог
+$this->log->write($message); // Записывает сообщение в лог
+ 
+// Request Запрос
+$this->request->clean($data); // Очищает поступившие данные для предотвращения XSS
+$this->request->get['x'] = $_GET['x']
+$this->request->post['x'] = $_POST['x']
+ 
+// Response Ответ
+$this->response->addHeader($header); // Добавляет header
+$this->response->redirect($url); // Перенаправляет на $url
+ 
+// Session Сессия
+$this->session->data['x'] = $_SESSION['x']
