@@ -1,0 +1,270 @@
+Описание конфигурационного файла HAProxy
+HAProxy — свободное, очень быстрое и надежное решение, предлагающее высокую производительность при балансирование, и proxying для TCP вплодь до HTTP трафика. Это особенно хорошо для вебсайтов, работаюших при очень высоких нагрузках, нуждаюшихся в постоянном контроле Layer7 запросов и ответов. Поддерживает десятки тысяч подключений. При этом его интеграция в существующую систему происходит очень легко.
+HAProxy в качестве балансировшика используеться в:
+Github
+Stackoverflow
+Serverfault
+Twitter
+и многих других крупных проэктах.
+
+
+Конфигурирование HAProxy состоит из 3 основных частей:
+Аргументы из командной строки, которые всегда имеют приоритет
+«global» раздел конфигурационного файла, который устанавливает параметры для всего процесса
+И разделов настройки проксирования в конфигурационном файле: «defaults», «listen», «frontend» и «backend»
+
+Раздел defaults — определяет параметры по умолчанию для всех остальных разделов и являеться обязательным.
+
+Раздел frontend — описывает набор интерфейсов для принятия соединений от клиентов (браузеров).
+
+Раздел backend — описывает набор серверов, к которым будет подключаться прокси
+для переадресации входящих соединений.
+
+Раздел listen — описывает полный прокси в одном разделе (объединенное описание «frontend» и «backend» ). Как правило, полезна только для TCP трафикa.
+
+Полный пример конфигурационного файла:
+
+global
+log 127.0.0.1 local0 notice
+#stats socket /tmp/stats
+maxconn 10000
+#chroot /usr/share/haproxy
+#nbproc 2
+user haproxy
+group haproxy
+daemon
+#debug
+#quiet
+
+defaults
+log global
+mode http
+option httplog
+option dontlognull
+retries 3
+option redispatch
+option httpclose
+option forwardfor
+maxconn 10000
+contimeout 5000
+clitimeout 50000
+srvtimeout 50000
+errorfile 400 /etc/haproxy/errors/400.http
+errorfile 403 /etc/haproxy/errors/403.http
+errorfile 408 /etc/haproxy/errors/408.http
+errorfile 500 /etc/haproxy/errors/500.http
+errorfile 502 /etc/haproxy/errors/502.http
+errorfile 503 /etc/haproxy/errors/503.http
+errorfile 504 /etc/haproxy/errors/504.http
+
+frontend http
+bind *:80
+acl is_site1 hdr_dom(host) -i site1
+acl is_site2 hdr_dom(host) -i site2
+acl is_site3 hdr_dom(host) -i site3
+acl is_cdn hdr_dom(host) -i cdn
+acl is_cdnt hdr_dom(host) -i cdnt
+acl is_site4 hdr_dom(host) -i site4
+use_backend site1_cluster1 if is_site1
+use_backend site2_cluster1 if is_site2
+use_backend site3_cluster1 if is_site3
+use_backend cdn_cluster1 if is_cdn
+use_backend cdnt_cluster1 if is_cdnt
+use_backend site4_cluster1 if is_site4
+
+backend site1_cluster1
+balance roundrobin
+option httpchk HEAD /show.fcgi?show=stat HTTP/1.1\r\nHost:site1.my.com
+stats enable
+fullconn 200
+server srv-1.2.my.com 21.18.21.4:80 cookie site112ha check inter 2000 fall 3 minconn 30 maxconn 70 weight 1
+server srv-1.3.my.com 21.86.21.20:80 cookie site113ha check inter 2000 fall 3 minconn 30 maxconn 70 weight 100
+server srv-3.2.my.com 21.18.21.6:81 cookie site132ha check inter 2000 fall 3 backup
+server srv-3.3.my.com 21.86.21.02:81 cookie site133ha check inter 2000 fall 3 backup
+
+backend site4_cluster1
+balance roundrobin
+appsession site4ha len 64 timeout 3h prefix
+cookie site4ha insert indirect nocache
+option httpchk HEAD / HTTP/1.1\r\nHost:site4.my.com
+stats enable
+server srv-1.2.my.com 21.18.21.4:80 cookie site412ha check inter 2000 fall 3
+server srv-1.3.my.com 21.86.21.20:80 cookie site413ha check inter 2000 fall 3
+
+backend site2_cluster1
+balance roundrobin
+appsession site2ha len 64 timeout 3h prefix
+cookie site2ha insert indirect nocache
+option httpchk HEAD / HTTP/1.1\r\nHost:site2.my.com
+stats enable
+server srv-1.2.my.com 21.18.21.4:80 cookie site212ha check inter 2000 fall 3
+server srv-1.3.my.com 21.86.21.20:80 cookie site213ha check inter 2000 fall 3
+
+backend site3_cluster1
+balance roundrobin
+option httpchk HEAD / HTTP/1.1\r\nHost:site3.my.com
+stats enable
+cookie site3ha insert indirect nocache
+server srv-1.2.my.com 21.18.21.4:80 cookie site312ha check inter 2000 fall 3 weight 1
+server srv-1.3.my.com 21.86.21.20:80 cookie site313ha check inter 2000 fall 3 weight 100
+
+backend cdn_cluster1
+balance leastconn
+option httpchk HEAD / HTTP/1.1\r\nHost:cdn.my.com
+stats enable
+server srv-3.2.my.com 21.18.21.6:81 check inter 2000 fall 3 weight 1
+server srv-3.3.my.com 21.86.21.02:81 check inter 2000 fall 3 weight 100
+
+backend cdnt_cluster1
+balance leastconn
+option httpchk HEAD / HTTP/1.1\r\nHost:cdnt.my.com
+stats enable
+server srv-3.2.my.com 21.18.21.6:81 check inter 2000 fall 3 weight 1
+server srv-3.3.my.com 21.86.21.02:81 check inter 2000 fall 3 weight 100
+
+listen stats-srv-3.my.com *:8180
+stats uri /stats
+stats realm Haproxy\ Statistics
+stats show-legends
+stats refresh 5s
+maxconn 300
+mode http
+option httpclose
+transparent
+stats auth test:test
+clitimeout 10000
+srvtimeout 10000
+contimeout 4000
+
+
+Рассмотрим раздел конфигурационного файла «global»
+
+global
+log 127.0.0.1 local0 notice
+#stats socket /tmp/stats
+maxconn 10000
+#chroot /usr/share/haproxy
+#nbproc 2
+user haproxy
+group haproxy
+daemon
+#debug
+#quiet
+
+log «address» «facility» [max level [min level]] (log 127.0.0.1 local0 notice) — Добавляет сервер системного журнала. «facility» — должен быть одним из 24 стандартных типов журналирования (kern user mail daemon auth syslog lpr news uucp cron auth2 ftp ntp audit alert cron2 local0 local1 local2 local3 local4 local5 local6 local7)
+maxconn «number» (maxconn 10000) — Устанавливает максимальное число одновременных подключений для каждого процесса.
+nbproc «number» (nbproc 2) — задает количество проццессов. По умолчанию только один процесс будет создан.
+daemon — режим работы демоном
+user — пользователь от которого работает процес
+group — группа от которой работает процес
+chroot /usr/share/haproxy — окружение процесса
+stats socket /tmp/stats — путь создания сокета с которого можно читать и запрашивать тикущюю информацию по работе
+
+
+Рассмотрим раздел конфигурационного файла «defaults»
+
+defaults
+log global
+mode http
+option httplog
+option dontlognull
+retries 3
+option redispatch
+option httpclose
+option forwardfor
+maxconn 10000
+contimeout 5000
+clitimeout 50000
+srvtimeout 50000
+errorfile 400 /etc/haproxy/errors/400.http
+errorfile 403 /etc/haproxy/errors/403.http
+errorfile 408 /etc/haproxy/errors/408.http
+errorfile 500 /etc/haproxy/errors/500.http
+errorfile 502 /etc/haproxy/errors/502.http
+errorfile 503 /etc/haproxy/errors/503.http
+errorfile 504 /etc/haproxy/errors/504.http
+
+log global — включает в журналирование информацию о трафике
+mode http — режим работы HAProxy, в http режиме происходит анализ Layer 7 трафика
+option httplog — Добавляет в лог HTTP запросы, состояние сеанса и таймеры
+option dontlognull — не логировать пустые конекшины
+retries 3 — количество попыток определить состояние бекенда после обрыва соеденения
+option redispatch — перерастределение запросов после обрыва связи с какимто бекендом
+option httpclose — закрывать пассивные соеденения
+option forwardfor — включение X-Forwarded-For для передачи IP клиента бекенду
+errorfile XXX — определение своих страниц ошибок.
+
+
+Расмотрим раздел конфигурационного файла «frontend»
+
+frontend http
+bind *:80
+acl is_site1 hdr_dom(host) -i site1
+acl is_site2 hdr_dom(host) -i site2
+acl is_site3 hdr_dom(host) -i site3
+acl is_cdn hdr_dom(host) -i cdn
+acl is_cdnt hdr_dom(host) -i cdnt
+acl is_site4 hdr_dom(host) -i site4
+use_backend site1_cluster1 if is_site1
+use_backend site2_cluster1 if is_site2
+use_backend site3_cluster1 if is_site3
+use_backend cdn_cluster1 if is_cdn
+use_backend cdnt_cluster1 if is_cdnt
+use_backend site4_cluster1 if is_site4
+
+frontend http — задаем режим работы фронтенда
+bind *:80 — задает на каком IP и порту будем слушать запросы
+acl is_site1 hdr_dom(host) -i site1 — создаем политику определения запроса к конкретному сайту. hdr_dom(host) содержит адрес сайта, и если он совпадает(-i) с написаным (site1), то подпадает под политику is_site1
+use_backend site1_cluster1 if is_site1 — описуем какой бекенд использовать для какой политики
+
+
+Расмотрим раздел конфигурационного файла «backend»
+
+backend site1_cluster1
+balance roundrobin
+option httpchk HEAD /show.fcgi?show=stat HTTP/1.1\r\nHost:site1.my.com
+stats enable
+fullconn 200
+server srv-1.2.my.com 21.18.21.4:80 cookie site112ha check inter 2000 fall 3 minconn 30 maxconn 70 weight 1
+server srv-1.3.my.com 21.86.21.20:80 cookie site113ha check inter 2000 fall 3 minconn 30 maxconn 70 weight 100
+server srv-3.2.my.com 21.18.21.6:81 cookie site132ha check inter 2000 fall 3 backup
+server srv-3.3.my.com 21.86.21.02:81 cookie site133ha check inter 2000 fall 3 backup
+
+backend cdn_cluster1
+balance leastconn
+option httpchk HEAD / HTTP/1.1\r\nHost:cdn.my.com
+stats enable
+server srv-3.2.my.com 21.18.21.6:81 check inter 2000 fall 3 weight 1
+server srv-3.3.my.com 21.86.21.02:81 check inter 2000 fall 3 weight 100
+
+backend site1_cluster1 — название бекенда
+balance (roundrobin/leastconn/static-rr/uri/source/url_param) — настройка алгоритма балансировки.
+option httpchk HEAD /show.fcgi?show=stat HTTP/1.1\r\nHost:site1.my.com — настройка способа проверки на доступность бекенда
+server srv-1.3.my.com 21.86.21.20:80 cookie site113ha check inter 2000 fall 3 minconn 30 maxconn 70 weight 100 (backup/disable) — описание сервера. server "Название" "IP: порт" "cookie site113ha — задание кукиса необходимо для правильной балансирови сесий клиентов" "check inter 2000 fall 3 — проверять каждые 2с и после 3 ошибок считать недоступным" "minconn 30 maxconn 70 — организация очереди запросов, чтоб на сервере небыло больше 70 однавременно обрабатываюшихся запросов" "weight 100 — вес сервера от 1 до 100" "backup/disable — использовать в качестве бекапного сервера/отключить сервер"
+stats enable — включить статистику
+fullconn 200 — максимальное значение одновременных конектов
+
+
+Рассмотрим раздел конфигурационного файла «listen» в котором реализован доступ к статистике
+
+listen stats-srv-3.my.com *:8180
+stats uri /stats
+stats realm Haproxy\ Statistics
+stats show-legends
+stats refresh 5s
+maxconn 300
+mode http
+option httpclose
+transparent
+stats auth test:test
+clitimeout 10000
+srvtimeout 10000
+contimeout 4000
+
+listen stats-srv-3.my.com *:8180 — описание IP: порта доступа к статистике
+stats uri /stats — URL доступа к статистеке
+stats realm Haproxy\ Statistics — титл странички статистики
+stats show-legends — отобразать в статистеке дополнительную информацию о параметрах
+stats refresh 5s — интервал автоматического обнавления странички статистики
+stats auth test:test — логин и пароль для доступа к статистике
+High Performance, haproxy, load balancing
