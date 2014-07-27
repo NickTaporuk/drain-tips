@@ -1,0 +1,279 @@
+link http://ruhighload.com/post/%D0%9E%D0%BF%D1%82%D0%B8%D0%BC%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D1%8F+YII
+
+Начало  / yii
+
+ 
+9 шагов по оптимизации YII
+#yii
+
+9 шагов по оптимизации YII
+Обычная установка Yii не использует многих механизмов, которые могут сделать Ваше приложение значительно быстрее. Посмотрим на пропускную способность приложения blog (один из примеров Yii) в стандартной поставке.
+
+Для анализа пропускной способности воспользуемся инструментом Apache Benchmark:
+
+# ab -c 5 -n 50 http://yii.ruhighload.com/
+...
+Total transferred:      265750 bytes
+HTML transferred:       248150 bytes
+Requests per second:    30.28 [#/sec] (mean)
+Time per request:       165.119 [ms] (mean)
+Time per request:       33.024 [ms] (mean, across all concurrent requests)
+Transfer rate:          157.17 [Kbytes/sec] received
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0    1   2.5      0      11
+Processing:    46  163  66.6    137     365
+Waiting:       46  156  66.5    133     363
+Total:         46  163  67.1    137     365
+
+Percentage of the requests served within a certain time (ms)
+  50%    137
+  66%    163
+  75%    196
+  80%    213
+  90%    287
+  95%    318
+  98%    365
+  99%    365
+ 100%    365 (longest request)
+# 30 запросов в секунду выдает сервер на стандартной установке Yii
+
+Скромный сервер в 512Мб оперативной памяти с одним ядром способен будет выдержать 30 запросов в секунду. Этот показатель можно значительно улучшить.
+
+Кроме этого, уровень клиентской оптимизации — 80 из 100. Самые важные проблемы:
+
+Не включено сжатие
+Не включено браузерное кэширование
+Не минифицированы файлы CSS/JavaScript
+Клиентская оптимизация
+
+Оптимизация приложения на стороне браузера может увеличить скорость его работы в несколько раз. Начинать следует именно с этого.
+
+1. Сжатие Gzip
+
+Убедитесь, что у в приложении включена компрессия текстовых данных. Это позволит уменьшить размера отдаваемых страниц в несколько раз. В Nginx'e компрессия включается так:
+server {
+	...
+	gzip on;
+    gzip_types text/plain text/css application/json application/x-javascript text/xml application/xml application/xml+rss text/javascript application/javascript;
+	...
+}
+# Включаем Gzip
+
+Полную конфигурацию Nginx для приложений Yii можно посмотреть тут.
+
+2. Клиентское кэширование
+
+Кэширование файлов статики в браузере даст ощутимый выигрыш в скорости сайта для посетителей. Количество запросов от посетителя к серверу сильно снизится. Иногда это может увеличить скорость работы сайта в несколько раз. Кроме этого, клиентское кэширование снизит нагрузку на сервер.
+
+В Nginx'e включается так:
+location ~ \.(js|css|png|jpg|gif|swf|ico|pdf|mov|fla|zip|rar)$ {
+	expires max;
+}
+# Включаем клиентское кэширование для файлов статики
+
+Поскольку файлы CSS/JS могут изменяться, воспользуемся методикой версионирования статики для управления клиентским кэшом. Для CSS:
+<? $css_version = 1; ?>
+<!-- blueprint CSS framework -->
+<link rel="stylesheet" type="text/css" href="<?php echo Yii::app()->request->baseUrl; ?>/css/screen.css?<?=$css_version?>" media="screen, projection" />
+<link rel="stylesheet" type="text/css" href="<?php echo Yii::app()->request->baseUrl; ?>/css/print.css?<?=$css_version?>" media="print" />
+<!--[if lt IE 8]>
+<link rel="stylesheet" type="text/css" href="<?php echo Yii::app()->request->baseUrl; ?>/css/ie.css?<?=$css_version?>" media="screen, projection" />
+<![endif]-->
+
+<link rel="stylesheet" type="text/css" href="<?php echo Yii::app()->request->baseUrl; ?>/css/main.css?<?=$css_version?>" />
+<link rel="stylesheet" type="text/css" href="<?php echo Yii::app()->request->baseUrl; ?>/css/form.css?<?=$css_version?>" />
+# CSS версии для управления кэшом в браузере
+
+Для версионирования Javascript нужно использовать метод scriptMap():
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<? $cs=Yii::app()->clientScript;
+$js_version = 1;
+$cs->scriptMap = array(
+    'jquery.min.js' => '/assets/a898d977/jquery.min.js?' . $js_version,
+    'jquery.ba-bbq.min.js' => '/assets/a898d977/jquery.ba-bbq.min.js?' . $js_version,
+    'jquery.yiilistview.js' => '/assets/5c8d3411/listview/jquery.yiilistview.js?' . $js_version,
+); ?>**
+<head>
+...
+# Javascript версии для управления кэшом в браузере
+
+3. Минификация и склеивание статики
+
+Несколько CSS файлов — это несколько HTTP запросов. Намного лучше иметь один CSS файл, чтобы клиенту не приходилось делать много запросов. То же самое касается и Javascript'a. Для использования этого в Yii необходимо использовать сторонний компонент минификации (например, YUI компрессор) и переписать загрузку JS/CSS файлов в HTML.
+
+Минификация
+
+Сначала все Javascript файлы необходимо "склеить" в один файл all.js. После этого — выполнить минификацию с помощью YUI compressor:
+
+cat assets/a898d977/jquery.min.js assets/a898d977/jquery.ba-bbq.min.js assets/5c8d3411/listview/jquery.yiilistview.js > all.js
+java -jar /path/to/yui.jar all.js -o all.js
+# Javascript минификация
+
+То же самое делаем для CSS — в all.css:
+
+cat css/screen.css css/print.css css/main.css css/form.css assets/78f165f3/highlight.css assets/a6d257ef/pager.css assets/5c8d3411/listview/styles.css > all.css
+java -jar /path/to/yui.jar all.css -o all.css
+# CSS минификация
+
+Загрузка
+
+Теперь необходимо загрузить нужные файлы в HTML:
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<?$cs=Yii::app()->clientScript;
+$js_version = 1;
+$css_version = 1;
+$cs->scriptMap=array(
+    'jquery.min.js' => 'all.js?' . $js_version,
+    'jquery.ba-bbq.min.js' => 'all.js?' . $js_version,
+    'jquery.yiilistview.js' => 'all.js?' . $js_version,
+    'pager.css' => 'all.css?' . $css_version,
+    'highlight.css' => 'all.css?' . $css_version,
+    'styles.css' => 'all.css?' . $css_version,
+);?>
+<head>
+...
+# Загрузка минифицированных JS/CSS файлов
+
+Следует учитывать, что такую процедуру минификации необходимо проделывать после каждого изменения в Javascript или CSS. Зато нет необходимости использовать это в среде разработки. Поэтому этот процесс подготовки статики будет удобно встроить в deploy-скрипт.
+
+Серверная оптимизация
+
+Серверная оптимизация влияет на скорость генерации страниц. Время генерации страниц обычно не так важно для посетителя. Зато это определяет количество запросов, которое сможет обработать сервер в единицу времени. Чем лучше оптимизировано приложение, тем больше клиентов сможет обслужить сервер.
+
+4. Оптимизация PHP
+
+Основным и обязательным шагом по оптимизации PHP является установка системы кэширования байт-кода. Используйте OpCache либо APC для версия PHP больше или меньше 5.5 соответственно. Кэширование байткода позволяет сэкономить на чтении и компиляции файлов. Это разгрузит процессор и ускорит работу приложения.
+
+5. Выключение режима отладки
+
+Не забудьте отключить режим отладки. Константа YII_DEBUG должна быть установлена в false:
+define('YII_DEBUG', false);
+6. Упрощенный загрузчик
+
+Использование упрощенного загрузчика yiilite.php может быть полезно для небольших приложений. Он содержит основные классы без комментариев в одном файле.
+
+Для включения загрузчика yiilite.php, отредактируйте index.php:
+
+...
+$yii=dirname(__FILE__).'/../../framework/yiilite.php';
+$config=dirname(__FILE__).'/protected/config/main.php';
+7. MySQL Запросы
+
+ActiveRecord может строить очень сложные запросы либо их серии. Анализируйте подобные ситуации с помощью профилирования. В обнаруженных случаях используйте компонент DAO для построения прямых SQL-запросов:
+<?
+...
+$connection=new CDbConnection('mysql:dbname=test', 'test', 'test');
+echo $connection->createCommand('SELECT * FROM posts WHERE tag_id = 27 AND comments_count > 50 AND approved = 1 ORDER BY popularity DESC LIMIT 10')->queryScalar();
+# Запрос на MySQL с индексами может работать намного быстрее, чем серия запросов на PHP
+
+8. Кэширование запросов
+
+Кэширование тяжелых запросов является неотъемлемой частью оптимизации любых приложений. Yii поддерживает кэширование на основе Memcache. Для его включения, необходимо указать настройки кэша в файле protected/config/main.php:
+<? return array(
+	...
+	 'components'=>array(
+		...
+		'cache'=>array(
+            'class'=>'system.caching.CMemCache',
+            'servers'=>array(
+                array('host'=>'127.0.0.1', 'port'=>11211),
+            ),
+        ),
+		...
+# Подключаем Memcache
+
+Теперь мы можем использовать метод cache() для кэширования любого запроса:
+$posts = Post::model()->cache(60)->findAll();
+# Кэшируем запрос к модели Post на 60 секунд
+
+9. Кэширование страниц
+Кэширование страниц — один из самых мощных методов ускорения сайтов. Такая методика хорошо подходит для сайтов, которые нечасто изменяются (например, блоги/новости/магазины). Для кэширования страниц в Yii необходимо в контроллере изменить обработчик filters():
+<?
+class PostController extends Controller
+{
+	...
+	public function filters()
+    {
+        return array(
+            array(
+                'COutputCache',
+                'duration'=> 60,
+            ),
+        );
+    }
+# Закэширует страницы этого контроллера на 60 секунд
+
+Кроме этого Yii позволяет указать параметр, по уникальному значению которого будут сохраняться данные. Например, мы хотим сохранять кэш отдельно для каждой записи в блоге. Тогда необходимо использовать GET параметр ID, как переменную часть ключа:
+<?
+class PostController extends Controller
+{
+	...
+	public function filters()
+    {
+        return array(
+            array(
+                'COutputCache',
+                'duration'=> 60,
+				'varyByParam'=>array('id'),
+            ),
+        );
+    }
+# Закэширует страницы отдельно для каждого значения в GET параметре ID
+
+Результат
+
+Проведем повторный тест приложения:
+
+# ab -c 5 -n 50 http://yii.ruhighload.com/
+...
+Total transferred:      224450 bytes
+HTML transferred:       216500 bytes
+Requests per second:    387.81 [#/sec] (mean)
+Time per request:       12.893 [ms] (mean)
+Time per request:       2.579 [ms] (mean, across all concurrent requests)
+Transfer rate:          1700.07 [Kbytes/sec] received
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0    1   2.0      0       9
+Processing:     5   12   2.1     12      15
+Waiting:        2   11   2.7     11      14
+Total:          8   12   1.9     12      20
+
+Percentage of the requests served within a certain time (ms)
+  50%     12
+  66%     13
+  75%     14
+  80%     14
+  90%     14
+  95%     15
+  98%     20
+  99%     20
+ 100%     20 (longest request)
+# Видим уменьшение времени генерации страницы в 10 раз
+
+Скорость работы и количество обрабатываемых запросов в секунду отличаются на порядок в лучшую сторону. Основной прирост в производительности принесло кэширование страниц.
+
+Кроме этого, клиентский показатель оптимизации вырос до 93 / 100. Хороший уровень для большинства сайтов.
+
+Самое важное
+
+Оптимизации приложения на платформе Yii может увеличить его скорость в несколько раз. Используйте клиентскую оптимизацию для увеличения скорости работы для посетителей. Серверная оптимизация позволит выдержать больше посетителей не покупая более дорогие сервера.
+
+
+ Подписаться    Следующий материал    Задать вопрос      
+Похожий материал
+Чеклист по скорости PHP
+Работа с картинками
+Оптимизация Wordpress
+Sphinxsearch - объединение индексов (index merging)
+Вопросы по теме
+Конфигурация Nginx для Yii
+
+
+ Зайти
+
+Главная   Серверная   Браузерная   Масштабирование   Темы   Вопросы   Инструменты   Для начинающих   Рейтинг скорости сайтов  
+Создано на.io, сгенерировано за 0.02 сек.   Дэн Голотюк   Баги и фичи   Статистика
