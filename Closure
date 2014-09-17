@@ -1,0 +1,116 @@
+
+Closure::bind
+
+(PHP 5 >= 5.4.0)
+Closure::bind — Дублирует замыкание с указанием связанного объекта и области видимости класса
+
+Описание ¶
+
+public static Closure Closure::bind ( Closure $closure , object $newthis [, mixed $newscope = 'static' ] )
+Этот метод является статическим вариантом Closure::bindTo(). Смотрите документацию к указанному методу для подробной информации.
+
+Список параметров ¶
+
+closure
+Анонимная функция для привязывания к объекту
+
+newthis
+Объект, к которому будет привязана переданная функция, или NULL для отсоединения функции от ее текущего объекта.
+
+newscope
+Область видимости класса, с которой ассоциируется замыкание, или 'static' для сохранения текущей области видимости. Если передан объект, то будет использован его класс. Этот параметр определяет видимость protected (защищенных) и private (закрытых) методов привязанного объекта.
+
+Возвращаемые значения ¶
+
+Возвращает новый объект Closure или FALSE в случае возникновения ошибки
+
+Примеры ¶
+
+Пример #1 Пример Closure::bind()
+
+<?php
+class A {
+    private static $sfoo = 1;
+    private $ifoo = 2;
+}
+$cl1 = static function() {
+    return A::$sfoo;
+};
+$cl2 = function() {
+    return $this->ifoo;
+};
+
+$bcl1 = Closure::bind($cl1, null, 'A');
+$bcl2 = Closure::bind($cl2, new A(), 'A');
+echo $bcl1(), "\n";
+echo $bcl2(), "\n";
+?>
+Результатом выполнения данного примера будет что-то подобное:
+
+1
+2
+Смотрите также ¶
+
+Анонимные функции
+Closure::bindTo() - Дублирует замыкание с указанием связанного объекта и области видимости класса
+add a note add a note
+User Contributed Notes 1 note
+
+up
+down
+23 Vincius Krolow ¶1 year ago
+With this class and method, it's possible to do nice things, like add methods on the fly to an object.
+
+MetaTrait.php
+<?php
+trait MetaTrait
+{
+    
+    private $methods = array();
+
+    public function addMethod($methodName, $methodCallable)
+    {
+        if (!is_callable($methodCallable)) {
+            throw new InvalidArgumentException('Second param must be callable');
+        }
+        $this->methods[$methodName] = Closure::bind($methodCallable, $this, get_class());
+    }
+
+    public function __call($methodName, array $args)
+    {
+        if (isset($this->methods[$methodName])) {
+            return call_user_func_array($this->methods[$methodName], $args);
+        }
+
+        throw RunTimeException('There is no method with the given name to call');
+    }
+
+}
+?>
+
+test.php
+<?php
+require 'MetaTrait.php';
+
+class HackThursday {
+    use MetaTrait;
+
+    private $dayOfWeek = 'Thursday';
+
+}
+
+$test = new HackThursday();
+$test->addMethod('when', function () {
+    return $this->dayOfWeek;
+});
+
+echo $test->when();
+
+?>
+add a note add a note
+Closure
+_​_​construct
+bind
+bindTo
+Copyright © 2001-2014 The PHP Group My PHP.net Contact Other PHP.net sites Mirror sites Privacy policy
+To Top
