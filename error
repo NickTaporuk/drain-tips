@@ -1,0 +1,5 @@
+try {
+			landing_track_peer::track($this->track_params, landing_track_peer::ACTION_SHOW);
+		} catch (Exception $e) {
+			error_log( $e->getMessage() );
+		}
