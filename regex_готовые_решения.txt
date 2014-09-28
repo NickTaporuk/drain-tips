@@ -1,20 +1,22 @@
+Взять только все буквы
+        \p{L}+(/sign/inter?fr=1&fb=1)
 Именованное сохранение
-\b(?<year>\d\d\d\d)-(?<month>\d\d)-(?<day>\d\d)\b
-Параметры: нет
-Диалекты: .NET, PCRE 7, Perl 5.10, Ruby 1.9
-\b(?’year’\d\d\d\d)-(?’month’\d\d)-(?’day’\d\d)\b
-Параметры: нет
-Диалекты: .NET, PCRE 7, Perl 5.10, Ruby 1.9
-\b(?P<year>\d\d\d\d)-(?P<month>\d\d)-(?P<day>\d\d)\b
-Параметры: нет
-Диалекты: PCRE 4 and later, Perl 5.10, Python
+        \b(?<year>\d\d\d\d)-(?<month>\d\d)-(?<day>\d\d)\b
+        Параметры: нет
+        Диалекты: .NET, PCRE 7, Perl 5.10, Ruby 1.9
+        \b(?’year’\d\d\d\d)-(?’month’\d\d)-(?’day’\d\d)\b
+        Параметры: нет
+        Диалекты: .NET, PCRE 7, Perl 5.10, Ruby 1.9
+        \b(?P<year>\d\d\d\d)-(?P<month>\d\d)-(?P<day>\d\d)\b
+        Параметры: нет
+        Диалекты: PCRE 4 and later, Perl 5.10, Python
 Именованные обратные ссылки
-\b\d\d(?<magic>\d\d)-\k<magic>-\k<magic>\b
-Параметры: нет
-Диалекты: .NET, PCRE 7, Perl 5.10, Ruby 1.9
-\b\d\d(?’magic’\d\d)-\k’magic’-\k’magic’\b
-Параметры: нет
-Диалекты: .NET, PCRE 7, Perl 5.10, Ruby 1.9
-\b\d\d(?P<magic>\d\d)-(?P=magic)-(?P=magic)\b
-Параметры: нет
-Диалекты: PCRE 4 and later, Perl 5.10, Python
+        \b\d\d(?<magic>\d\d)-\k<magic>-\k<magic>\b
+        Параметры: нет
+        Диалекты: .NET, PCRE 7, Perl 5.10, Ruby 1.9
+        \b\d\d(?’magic’\d\d)-\k’magic’-\k’magic’\b
+        Параметры: нет
+        Диалекты: .NET, PCRE 7, Perl 5.10, Ruby 1.9
+        \b\d\d(?P<magic>\d\d)-(?P=magic)-(?P=magic)\b
+        Параметры: нет
+        Диалекты: PCRE 4 and later, Perl 5.10, Python
