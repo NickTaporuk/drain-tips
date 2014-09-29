@@ -1,5 +1,5 @@
 Взять только все буквы
-        \p{L}+(/sign/inter?fr=1&fb=1)
+        \p{L}+(/sign/inter?fr=1&fb=1)!!preg_match_all()
 Именованное сохранение
         \b(?<year>\d\d\d\d)-(?<month>\d\d)-(?<day>\d\d)\b
         Параметры: нет
