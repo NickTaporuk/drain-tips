@@ -1,0 +1,13 @@
+window.fl_message = function(text, options) {
+    if (text == undefined)
+        return;
+
+    var defaults = {
+        text: text,
+        type: 'warning',
+        timeout: 3000
+    }
+    options = $.extend(defaults, options)
+
+    noty(options)
+}
